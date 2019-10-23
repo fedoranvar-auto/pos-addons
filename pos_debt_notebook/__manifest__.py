@@ -15,7 +15,7 @@
     'category': 'Point Of Sale',
     'live_test_url': 'http://apps.it-projects.info/shop/product/pos-debt-notebook?version=12.0',
     "images": ['images/debt_notebook.png'],
-    'version': '12.0.5.3.1',
+    'version': '13.0.5.3.1',
     'author': 'IT-Projects LLC, Ivan Yelizariev',
     "support": "pos@it-projects.info",
     'website': 'https://apps.odoo.com/apps/modules/12.0/pos_debt_notebook/',
@@ -44,7 +44,7 @@
     "demo": [
         'data/demo.xml',
     ],
-    'installable': False,
+    'installable': True,
     'uninstall_hook': 'pre_uninstall',
 
     "demo_title": "POS Debt/Credit Notebook",

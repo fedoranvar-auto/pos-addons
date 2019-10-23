@@ -11,7 +11,6 @@ import copy
 from odoo import models, fields, api
 from pytz import timezone
 import pytz
-import odoo.addons.decimal_precision as dp
 from odoo.tools import float_is_zero
 import logging
 
@@ -90,7 +89,7 @@ class ResPartner(models.Model):
             'date',
             'config_id',
             'order_id',
-            'invoice_id',
+            'move_id',
             'balance',
             'product_list',
             'journal_id',
@@ -132,16 +131,16 @@ class ResPartner(models.Model):
 
     debt = fields.Float(
         compute='_compute_debt', string='Debt', readonly=True,
-        digits=dp.get_precision('Account'), help='Debt of this partner only.')
+        digits='Account', help='Debt of this partner only.')
     credit_balance = fields.Float(
         compute='_compute_debt', string='Credit', readonly=True,
-        digits=dp.get_precision('Account'), help='Credit balance of this partner only.')
+        digits='Account', help='Credit balance of this partner only.')
     debt_company = fields.Float(
         compute='_compute_debt_company', string='Total Debt', readonly=True,
-        digits=dp.get_precision('Account'), help='Debt value of this company (including its contacts)')
+        digits='Account', help='Debt value of this company (including its contacts)')
     credit_balance_company = fields.Float(
         compute='_compute_debt_company', string='Total Credit', readonly=True,
-        digits=dp.get_precision('Account'), help='Credit balance of this company (including its contacts)')
+        digits='Account', help='Credit balance of this company (including its contacts)')
     debt_type = fields.Selection(compute='_compute_debt_type', selection=[
         ('debt', 'Display Debt'),
         ('credit', 'Display Credit')
@@ -234,6 +233,7 @@ class PosConfig(models.Model):
             pos.debt_type = debt_type
 
     def init_debt_journal(self):
+        import wdb;wdb.set_trace()
         journal_obj = self.env['account.journal']
         user = self.env.user
         debt_journal_active = journal_obj.search([
@@ -297,7 +297,7 @@ class PosConfig(models.Model):
                                                 'code': 'TCRED',
                                                 'type': 'cash',
                                                 'debt': True,
-                                                'journal_user': True,
+                                                # 'journal_user': True,
                                                 'debt_account': debt_account,
                                                 'credits_via_discount': False,
                                                 'category_ids': False,
@@ -308,7 +308,7 @@ class PosConfig(models.Model):
                                                 'credits_autopay': True,
                                                 })
         self.write({
-            'journal_ids': [(4, debt_journal.id)],
+            'payment_method_ids': [(4, debt_journal.id)],
             'debt_dummy_product_id': self.env.ref('pos_debt_notebook.product_pay_debt').id,
         })
         current_session = self.current_session_id
@@ -351,7 +351,7 @@ class PosConfig(models.Model):
             'code': vals['code'],
             'type': vals['type'],
             'debt': vals['debt'],
-            'journal_user': vals['journal_user'],
+            # 'journal_user': vals['journal_user'],
             'sequence_id': new_sequence.id,
             'company_id': user.company_id.id,
             'default_debit_account_id': debt_account.id,
@@ -371,7 +371,7 @@ class PosConfig(models.Model):
         })
         if vals['write_statement']:
             self.write({
-                'journal_ids': [(4, debt_journal.id)],
+                'payment_method_ids': [(4, debt_journal.id)],
                 'debt_dummy_product_id': vals['debt_dummy_product_id'],
             })
             current_session = self.current_session_id
@@ -400,7 +400,7 @@ class PosConfig(models.Model):
                              'code': 'DCRD',
                              'type': 'cash',
                              'debt': True,
-                             'journal_user': True,
+                            #  'journal_user': True,
                              'debt_account': debt_account,
                              'credits_via_discount': True,
                              'category_ids': False,
@@ -419,7 +419,7 @@ class PosConfig(models.Model):
                              'code': 'FCRD',
                              'type': 'cash',
                              'debt': True,
-                             'journal_user': True,
+                            #  'journal_user': True,
                              'debt_account': debt_account,
                              'credits_via_discount': False,
                              'category_ids': [(6, 0, [allowed_category])],
@@ -440,7 +440,7 @@ class AccountJournal(models.Model):
     category_ids = fields.Many2many('pos.category', string='POS product categories',
                                     help='POS product categories that can be paid with this credits.'
                                          'If the field is empty then all categories may be purchased with this journal')
-    debt_limit = fields.Float(string='Max Debt', digits=dp.get_precision('Account'), default=0,
+    debt_limit = fields.Float(string='Max Debt', digits='Account', default=0,
                               help='Partners is not allowed to have a debt more than this value')
     credits_via_discount = fields.Boolean(
         default=False, string='Zero transactions on credit payments',
@@ -655,5 +655,5 @@ class PosCreditUpdate(models.Model):
 class AccountPayment(models.Model):
     _inherit = 'account.payment'
 
-    has_invoices = fields.Boolean(store=True)
-    company_id = fields.Many2one(store=True)
+    has_invoices = fields.Boolean(store=True, compute_sudo=False)
+    company_id = fields.Many2one(store=True, compute_sudo=False)
