@@ -6,7 +6,7 @@ from odoo import models, fields, api
 
 
 MODULE = 'pos_journal_pin'
-
+# i'm checking
 
 class AccountInvoice(models.Model):
     _inherit = 'account.journal'
